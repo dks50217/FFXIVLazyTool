@@ -11,7 +11,7 @@ FFXIVLazyStore 是一個基於 .NET 8.0 和 Blazor 的網頁應用程式，用�
 
 1. 克隆這個儲存庫：
     ```sh
-    git clone https://github.com/yourusername/FFXIVLazyStore.git
+    git clone https://github.com/dks50217/FFXIVLazyStore.git
     cd FFXIVLazyStore
     ```
 
