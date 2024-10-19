@@ -1,5 +1,11 @@
 ﻿namespace FFXIVLazyStore.Model
 {
+    public class ProductVM
+    {
+        public int status { get; set; }
+        public Product product { get; set; }
+    }
+
     public class Product
     {
         public int Id { get; set; }
@@ -20,5 +26,13 @@
         public string? TopLeftIcon { get; set; }
         public string ServiceUrl { get; set; } = string.Empty;
         public bool ToFriend { get; set; }
+        public List<ProductItem> items { get; set; }
+    }
+
+    public class ProductItem
+    {
+        public string name { get; set; }
+        public int number { get; set; }
+        public string uriKey { get; set; }
     }
 }

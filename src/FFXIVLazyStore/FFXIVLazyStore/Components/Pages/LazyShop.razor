@@ -4,37 +4,38 @@
 @inject NavigationManager navigationManager
 @inject IJSRuntime jsRuntime
 @inject ContextMenuService ContextMenuService
+@using Radzen.Blazor.Rendering
 @rendermode InteractiveAuto
+@inject DialogService DialogService
 
 <PageTitle>LazyShop</PageTitle>
-
-<p>@category</p>
 
 @if (store.products != null)
 {
     @foreach (var productRow in store.products.Chunk(3))
     {
         <RadzenRow>
-            @foreach (var product in productRow)
+            @foreach (var product in productRow.Select((value, index) => (value, index)))
             {
                 <RadzenColumn>
                     <RadzenCard class="rz-my-8 rz-mx-auto card-hover" Style="width: 420px; height: 220px;">
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1rem" class="rz-p-4">
-                            <RadzenImage Path="@product.ThumbnailUrl" Style="width: 100px; height: 100px;" />
+                            <RadzenImage Path="@product.value.ThumbnailUrl" Style="width: 100px; height: 100px;" />
                             <RadzenStack Gap="0">
                                 <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-2 rz-my-0">Product Name</RadzenText>
                                 <RadzenText TextStyle="TextStyle.Body1">
-                                    <b>@(product.Name)</b>
+                                    <b>@(product.value.Name)</b>
                                 </RadzenText>
                                 <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Price</RadzenText>
                                 <RadzenText TextStyle="TextStyle.Body1">
-                                    <a>@(product.PriceText)</a>
+                                    <a>@(product.value.PriceText)</a>
                                </RadzenText>
                             </RadzenStack>
                         </RadzenStack>
+
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0">
-                            <RadzenButton Variant="Variant.Text" class="rz-text-secondary-color" Text="輝機連結" Click="() =>HandleTHuijiwiki(product)" />
-                            <RadzenButton Variant="Variant.Text" Text="網站連結" Click="() => HandleProductClick(product)"/>
+                            <RadzenButton Variant="Variant.Text" class="rz-text-secondary-color" Text="商品內容" Click="() => GetProductItems(product.value)" />
+                            <RadzenButton Variant="Variant.Text" Text="網站連結" Click="() => HandleProductClick(product.value)"/>
                         </RadzenStack>
                     </RadzenCard>
                 </RadzenColumn>
@@ -53,10 +54,14 @@
     private int previousSubCategory;
 
     private StoreVM store = new StoreVM();
+    private List<ProductItem> productItemList = new List<ProductItem>();
+    private List<RadzenButton> buttons = new List<RadzenButton>();
+
     private int offset = 0;
     private int limit = 40;
     private bool isInitialized = false;
     private DotNetObjectReference<LazyShop> objRef;
+    private Popup? popup;
 
     protected override async Task OnInitializedAsync()
     {
@@ -94,12 +99,33 @@
         await jsRuntime.InvokeVoidAsync("open", url, "_blank");
     }
 
-    private async Task HandleTHuijiwiki(Product product)
+    private async Task GetProductItems(Product product)
     {
-        // TODO Get from FFXIV collect api
-        var url = $"https://store.finalfantasyxiv.com/ffxivstore/{CultureInfo.CurrentCulture.Name}/product/{product.Id}";
+        if (product.items != null) return;
+        var requestUri = $"https://api.store.finalfantasyxiv.com/ffxivcatalog/api/products/{product.Id}?lang=en-us&currency=USD";
+        var result = await httpClient.GetFromJsonAsync<ProductVM>(requestUri);
 
-        //await jsRuntime.InvokeVoidAsync("open", url, "_blank");
+        if (result != null && result.product != null)
+        {
+            product.items = result.product.items;
+        }
+
+        var dialogResult = await DialogService.OpenAsync("商品內容", ds =>
+        @<RadzenStack Gap="1.5rem">
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                        Data="@product.items" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single">
+                <Columns>
+                    <RadzenDataGridColumn Property="@nameof(ProductItem.name)" Filterable="false" Title="Name" Frozen="true" Width="100px" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn Title="連結" Frozen="true" Sortable="false" Filterable="false" Width="80px" TextAlign="TextAlign.Center">
+                        <Template Context="data">
+                            <RadzenLink Path="@data.uriKey" Target="_blank" Text="官方連結" />
+                        <RadzenLink Path="@($"https://ff14.huijiwiki.com/wiki/ItemSearch?name={data.name}")" Target="_blank" Text="灰機連結" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenStack>);
+
     }
 
     [JSInvokable]

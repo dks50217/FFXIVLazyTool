@@ -4,7 +4,7 @@
 
 <RadzenStack AlignItems="AlignItems.Center" class="rz-p-12">
     <RadzenPanelMenu Style="width:300px">
-        <RadzenPanelMenuItem Text="Home" Icon="Home"></RadzenPanelMenuItem>
+        <RadzenPanelMenuItem Text="Home" Icon="Home" Path="/"></RadzenPanelMenuItem>
         <RadzenPanelMenuItem Text="LazyShop" Icon="shopping_bag">
             @if (categoryVM != null)
             {
@@ -27,12 +27,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var requestUri = $"https://api.store.finalfantasyxiv.com/ffxivcatalog/api/categories?lang={CultureInfo.CurrentCulture.Name}";
-        var result = await httpClient.GetFromJsonAsync<CategoryVM>(requestUri);
-
-        if (result != null)
+        if (categoryVM == null)
         {
-            this.categoryVM = result;
+            var requestUri = $"https://api.store.finalfantasyxiv.com/ffxivcatalog/api/categories?lang={CultureInfo.CurrentCulture.Name}";
+            var result = await httpClient.GetFromJsonAsync<CategoryVM>(requestUri);
+
+            if (result != null)
+            {
+                this.categoryVM = result;
+            }
         }
     }
 }
