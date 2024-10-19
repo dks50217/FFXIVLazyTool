@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35312.102
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FFXIVLazyStore", "FFXIVLazyStore\FFXIVLazyStore.csproj", "{32DF3908-34D5-40CC-B6DB-A0D9BA90E5F1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FFXIVLazyStore", "FFXIVLazyStore\FFXIVLazyStore.csproj", "{32DF3908-34D5-40CC-B6DB-A0D9BA90E5F1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core", "..\Service\Core.csproj", "{1CC88A79-8147-4DFA-A80F-7F4DA7C7E5F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{32DF3908-34D5-40CC-B6DB-A0D9BA90E5F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{32DF3908-34D5-40CC-B6DB-A0D9BA90E5F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{32DF3908-34D5-40CC-B6DB-A0D9BA90E5F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CC88A79-8147-4DFA-A80F-7F4DA7C7E5F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CC88A79-8147-4DFA-A80F-7F4DA7C7E5F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CC88A79-8147-4DFA-A80F-7F4DA7C7E5F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CC88A79-8147-4DFA-A80F-7F4DA7C7E5F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

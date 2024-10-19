@@ -1,0 +1,172 @@
+﻿@page "/LazyShop/{category:int}/{subCategory:int?}"
+@using System.Globalization
+@inject HttpClient httpClient
+@inject NavigationManager navigationManager
+@inject IJSRuntime jsRuntime
+@inject ContextMenuService ContextMenuService
+@rendermode InteractiveAuto
+
+<PageTitle>LazyShop</PageTitle>
+
+<p>@category</p>
+
+@if (store.products != null)
+{
+    @foreach (var productRow in store.products.Chunk(3))
+    {
+        <RadzenRow>
+            @foreach (var product in productRow)
+            {
+                <RadzenColumn>
+                    <RadzenCard class="rz-my-8 rz-mx-auto card-hover" Style="width: 420px; height: 220px;">
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1rem" class="rz-p-4">
+                            <RadzenImage Path="@product.ThumbnailUrl" Style="width: 100px; height: 100px;" />
+                            <RadzenStack Gap="0">
+                                <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-2 rz-my-0">Product Name</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body1">
+                                    <b>@(product.Name)</b>
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Price</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body1">
+                                    <a>@(product.PriceText)</a>
+                               </RadzenText>
+                            </RadzenStack>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0">
+                            <RadzenButton Variant="Variant.Text" class="rz-text-secondary-color" Text="輝機連結" Click="() =>HandleTHuijiwiki(product)" />
+                            <RadzenButton Variant="Variant.Text" Text="網站連結" Click="() => HandleProductClick(product)"/>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+            }
+        </RadzenRow>
+    }
+}
+
+@code {
+    [Parameter]
+    public int category { get; set; }
+    [Parameter]
+    public int subCategory { get; set; }
+
+    private int previousCategory;
+    private int previousSubCategory;
+
+    private StoreVM store = new StoreVM();
+    private int offset = 0;
+    private int limit = 40;
+    private bool isInitialized = false;
+    private DotNetObjectReference<LazyShop> objRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (store.products == null)
+        {
+            store.products = new List<Product>();
+            await LoadProducts();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (category != previousCategory || subCategory != previousSubCategory)
+        {
+            previousCategory = category;
+            previousSubCategory = subCategory;
+            offset = 0;
+            store?.products?.Clear();
+            await LoadProducts();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            objRef = DotNetObjectReference.Create(this);
+            await jsRuntime.InvokeVoidAsync("initScrollDetection", objRef, "scrollableContent");
+        }
+    }
+
+    private async Task HandleProductClick(Product product)
+    {
+        var url = $"https://store.finalfantasyxiv.com/ffxivstore/{CultureInfo.CurrentCulture.Name}/product/{product.Id}";
+        await jsRuntime.InvokeVoidAsync("open", url, "_blank");
+    }
+
+    private async Task HandleTHuijiwiki(Product product)
+    {
+        // TODO Get from FFXIV collect api
+        var url = $"https://store.finalfantasyxiv.com/ffxivstore/{CultureInfo.CurrentCulture.Name}/product/{product.Id}";
+
+        //await jsRuntime.InvokeVoidAsync("open", url, "_blank");
+    }
+
+    [JSInvokable]
+    public async Task LoadProducts()
+    {
+        var categoryID = category == 0 ? string.Empty : $"&categoryId={category}";
+        var subCategoryID = subCategory == 0 ? string.Empty : $"&subCategoryId={subCategory}";
+        var requestUri = $"https://api.store.finalfantasyxiv.com/ffxivcatalog/api/products/?lang={CultureInfo.CurrentCulture.Name}&currency=USD&limit={limit}&offset={offset}{categoryID}{subCategoryID}";
+        var result = await httpClient.GetFromJsonAsync<StoreVM>(requestUri);
+        if (result != null && result.products != null)
+        {
+            store.products?.AddRange(result.products);
+            offset += 40;
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnScrollToBottom()
+    {
+        var categoryID = category == 0 ? string.Empty : $"&categoryId={category}";
+        var subCategoryID = subCategory == 0 ? string.Empty : $"&subCategoryId={subCategory}";
+        var requestUri = $"https://api.store.finalfantasyxiv.com/ffxivcatalog/api/products/?lang={CultureInfo.CurrentCulture.Name}&currency=USD&limit={limit}&offset={offset}{categoryID}{subCategoryID}";
+        var result = await httpClient.GetFromJsonAsync<StoreVM>(requestUri);
+
+        if (result != null && result.products != null)
+        {
+            store.products?.AddRange(result.products);
+            offset += 40;
+        }
+
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await jsRuntime.InvokeVoidAsync("removeScrollListener", "scrollableContent");
+        objRef?.Dispose();
+    }
+}
+
+<style scoped>
+    .rz-card {
+        cursor : pointer;
+    }
+
+    .card-hover {
+        transition: box-shadow 0.3s ease-in-out;
+    }
+
+    .card-hover:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+</style>
+
+
+<script>
+    window.initScrollDetection = (dotnetHelper, elementId) => {
+        const element = document.getElementById(elementId);
+        element.addEventListener('scroll', () => {
+            if (element.scrollHeight - element.scrollTop === element.clientHeight) {
+                dotnetHelper.invokeMethodAsync('OnScrollToBottom');
+            }
+        });
+    };
+
+    window.removeScrollListener = (elementId) => {
+        const element = document.getElementById(elementId);
+        element.removeEventListener('scroll', null);
+    };
+</script>

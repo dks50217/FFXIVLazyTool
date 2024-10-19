@@ -1,0 +1,46 @@
+﻿@using System.Globalization
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="4px" JustifyContent="JustifyContent.End">
+   @*  <RadzenIcon Icon="language" /> *@
+    <RadzenDropDown @bind-Value=@selectedCulture Data=@supportedCultures Style="width: 100%; max-width: 100px;" Change="ApplySelectedCultureAsync">
+        <Template>
+            @((context as CultureInfo).Name)
+        </Template>
+        <ValueTemplate>
+            @((context as CultureInfo))
+        </ValueTemplate>
+    </RadzenDropDown>
+</RadzenStack>
+
+@code
+{
+    private CultureInfo[] supportedCultures = new[]
+    {
+        new CultureInfo("en-US"),
+        new CultureInfo("ja-JP"),
+    };
+
+    private CultureInfo? selectedCulture;
+
+    protected override void OnInitialized()
+    {
+        selectedCulture = CultureInfo.CurrentCulture;
+    }
+
+    private async Task ApplySelectedCultureAsync()
+    {
+        if (CultureInfo.CurrentCulture != selectedCulture)
+        {
+            var uri = new Uri(Navigation.Uri)
+                .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped);
+            var cultureEscaped = Uri.EscapeDataString(selectedCulture.Name);
+            var uriEscaped = Uri.EscapeDataString(uri);
+
+            Navigation.NavigateTo(
+                $"Culture/Set?culture={cultureEscaped}&redirectUri={uriEscaped}",
+                forceLoad: true);
+        }
+    }
+}

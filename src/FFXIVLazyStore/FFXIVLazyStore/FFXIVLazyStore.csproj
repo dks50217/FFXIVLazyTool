@@ -10,4 +10,8 @@
     <PackageReference Include="Radzen.Blazor" Version="5.2.12" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Service\Core.csproj" />
+  </ItemGroup>
+
 </Project>
