@@ -6,6 +6,11 @@
     <RadzenPanelMenu Style="width:300px">
         <RadzenPanelMenuItem Text="Home" Icon="Home" Path="/"></RadzenPanelMenuItem>
         <RadzenPanelMenuItem Text="LazyShop" Icon="shopping_bag">
+         @*    <RadzenPanelMenuItem Text="Favorite" Path="@($"LazyShop/favorite/0")"></RadzenPanelMenuItem> *@
+            <RadzenPanelMenuItem Text="Favorite" Path="@($"LazyShopFavorite")"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="New Items" Path="@($"LazyShop/filters/1")"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="On Sale" Path="@($"LazyShop/filters/2")"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="All Items" Path="@($"LazyShop/0")"></RadzenPanelMenuItem>
             @if (categoryVM != null)
             {
                 @foreach (var item in categoryVM.categories)

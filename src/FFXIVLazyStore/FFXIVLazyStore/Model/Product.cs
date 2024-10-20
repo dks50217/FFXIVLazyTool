@@ -27,6 +27,7 @@
         public string ServiceUrl { get; set; } = string.Empty;
         public bool ToFriend { get; set; }
         public List<ProductItem> items { get; set; }
+        public bool IsFavorite { get; set; }
     }
 
     public class ProductItem
@@ -34,5 +35,11 @@
         public string name { get; set; }
         public int number { get; set; }
         public string uriKey { get; set; }
+    }
+
+    public class FavoriteProduct
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 }

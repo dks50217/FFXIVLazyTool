@@ -1,0 +1,37 @@
+﻿@page "/LazyShopFavorite"
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedLocalStorage ProtectedLocalStorage
+
+<RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="20" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                Data="@favoriteProductList" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single">
+    <Columns>
+        <RadzenDataGridColumn Property="@nameof(FavoriteProduct.Id)" Filterable="false" Title="Id" Frozen="true" Width="100px" TextAlign="TextAlign.Center" />
+        <RadzenDataGridColumn Property="@nameof(FavoriteProduct.Name)" Filterable="false" Title="Name" Frozen="true" Width="100px" TextAlign="TextAlign.Center" />
+        <RadzenDataGridColumn Title="連結" Frozen="true" Sortable="false" Filterable="false" Width="80px" TextAlign="TextAlign.Center">
+            <Template Context="data">
+                <RadzenLink Path="@($"https://store.finalfantasyxiv.com/ffxivstore/en-us/product/{data.Id}")" Target="_blank" Text="商城連結" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private List<FavoriteProduct>? favoriteProductList { get; set; }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (favoriteProductList == null)
+        {
+            favoriteProductList = new List<FavoriteProduct>();
+            await LoadFavoriteProducts();
+        }
+    }
+
+    public async Task LoadFavoriteProducts()
+    {
+        var list = await ProtectedLocalStorage.GetAsync<List<FavoriteProduct>>("favorite");
+        var storageList = list.Success ? list.Value : new List<FavoriteProduct>();
+        this.favoriteProductList = storageList;
+    }
+}
+

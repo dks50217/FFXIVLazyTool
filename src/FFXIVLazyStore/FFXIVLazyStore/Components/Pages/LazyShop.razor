@@ -1,24 +1,47 @@
 ﻿@page "/LazyShop/{category:int}/{subCategory:int?}"
+@page "/LazyShop/filters/{filters:int?}"
+@* @page "/LazyShop/favorite/{category:int}" *@
 @using System.Globalization
 @inject HttpClient httpClient
 @inject NavigationManager navigationManager
 @inject IJSRuntime jsRuntime
 @inject ContextMenuService ContextMenuService
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Radzen.Blazor.Rendering
 @rendermode InteractiveAuto
 @inject DialogService DialogService
+@inject ProtectedLocalStorage ProtectedLocalStorage
+@inject NotificationService NotificationService
 
 <PageTitle>LazyShop</PageTitle>
 
 @if (store.products != null)
 {
-    @foreach (var productRow in store.products.Chunk(3))
+    var filteredProducts = store.products;
+
+    if (navigationManager.Uri.Contains("favorite"))
     {
-        <RadzenRow>
+        filteredProducts = store.products.Where(p => p.IsFavorite).ToList();
+    }
+    
+    @foreach (var productRow in filteredProducts.Chunk(3))
+    {
+        <RadzenRow AlignItems="AlignItems.Center" Gap="1rem">
             @foreach (var product in productRow.Select((value, index) => (value, index)))
             {
                 <RadzenColumn>
-                    <RadzenCard class="rz-my-8 rz-mx-auto card-hover" Style="width: 420px; height: 220px;">
+                    <RadzenCard class="rz-my-4 rz-mx-auto card-hover" Style="height:250px;">
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                            @if (product.value.IsFavorite)
+                            {
+                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="favorite_border" Size="ButtonSize.ExtraSmall" Click="() => ToggleFavorite(product.value)" />
+                            }
+                            else
+                            {
+                                <RadzenButton ButtonStyle="ButtonStyle.Base" Icon="favorite_border" Size="ButtonSize.ExtraSmall" Click="() => ToggleFavorite(product.value)" />
+                            }
+                        </RadzenStack>
+
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1rem" class="rz-p-4">
                             <RadzenImage Path="@product.value.ThumbnailUrl" Style="width: 100px; height: 100px;" />
                             <RadzenStack Gap="0">
@@ -28,11 +51,18 @@
                                 </RadzenText>
                                 <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Price</RadzenText>
                                 <RadzenText TextStyle="TextStyle.Body1">
-                                    <a>@(product.value.PriceText)</a>
+                                    @if(string.IsNullOrEmpty(product.value.SalePriceText))
+                                    {
+                                        <a>@(product.value.PriceText)</a>
+                                    }
+                                    else
+                                    {
+                                        <del>@(product.value.PriceText)</del>
+                                        <a>@(product.value.SalePriceText)</a>
+                                    }
                                </RadzenText>
                             </RadzenStack>
                         </RadzenStack>
-
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0">
                             <RadzenButton Variant="Variant.Text" class="rz-text-secondary-color" Text="商品內容" Click="() => GetProductItems(product.value)" />
                             <RadzenButton Variant="Variant.Text" Text="網站連結" Click="() => HandleProductClick(product.value)"/>
@@ -49,9 +79,12 @@
     public int category { get; set; }
     [Parameter]
     public int subCategory { get; set; }
+    [Parameter]
+    public int filters { get; set; }
 
     private int previousCategory;
     private int previousSubCategory;
+    private int previousFilters;
 
     private StoreVM store = new StoreVM();
     private List<ProductItem> productItemList = new List<ProductItem>();
@@ -74,10 +107,11 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        if (category != previousCategory || subCategory != previousSubCategory)
+        if (category != previousCategory || subCategory != previousSubCategory || filters != previousFilters)
         {
             previousCategory = category;
             previousSubCategory = subCategory;
+            previousFilters = filters;
             offset = 0;
             store?.products?.Clear();
             await LoadProducts();
@@ -124,8 +158,36 @@
                     </RadzenDataGridColumn>
                 </Columns>
             </RadzenDataGrid>
-        </RadzenStack>);
+        </RadzenStack>
+    );
 
+    }
+
+    private async Task ToggleFavorite(Product product)
+    {
+        var list = await ProtectedLocalStorage.GetAsync<List<FavoriteProduct>>("favorite");
+        var storageList = list.Success ? list.Value : new List<FavoriteProduct>();
+
+        if (product.IsFavorite)
+        {
+            storageList.RemoveAll(p => p.Id == product.Id);
+            await ProtectedLocalStorage.SetAsync("favorite", storageList);
+        }
+        else
+        {
+            storageList.Add(new FavoriteProduct { Id = product.Id, Name = product.Name });
+            await ProtectedLocalStorage.SetAsync("favorite", storageList);
+        }
+
+        product.IsFavorite = !product.IsFavorite;
+
+        NotificationService.Notify(new NotificationMessage 
+        { 
+          Severity = NotificationSeverity.Success, 
+          Summary = "已經加入我的最愛", 
+          Detail = product.Name,
+          Duration = 4000 
+        });
     }
 
     [JSInvokable]
@@ -133,10 +195,18 @@
     {
         var categoryID = category == 0 ? string.Empty : $"&categoryId={category}";
         var subCategoryID = subCategory == 0 ? string.Empty : $"&subCategoryId={subCategory}";
-        var requestUri = $"https://api.store.finalfantasyxiv.com/ffxivcatalog/api/products/?lang={CultureInfo.CurrentCulture.Name}&currency=USD&limit={limit}&offset={offset}{categoryID}{subCategoryID}";
+        var filtersID = filters == 0 ? string.Empty : $"&filters={filters}";
+        var requestUri = $"https://api.store.finalfantasyxiv.com/ffxivcatalog/api/products/?lang={CultureInfo.CurrentCulture.Name}&currency=USD&limit={limit}&offset={offset}{categoryID}{subCategoryID}{filtersID}";
         var result = await httpClient.GetFromJsonAsync<StoreVM>(requestUri);
         if (result != null && result.products != null)
         {
+            var favoriteList = await ProtectedLocalStorage.GetAsync<List<FavoriteProduct>>("favorite");
+
+            if (favoriteList.Success)
+            {
+                result.products.ForEach(p => p.IsFavorite = favoriteList.Value.Any(f => f.Id == p.Id));
+            }
+
             store.products?.AddRange(result.products);
             offset += 40;
         }
@@ -145,17 +215,7 @@
     [JSInvokable]
     public async Task OnScrollToBottom()
     {
-        var categoryID = category == 0 ? string.Empty : $"&categoryId={category}";
-        var subCategoryID = subCategory == 0 ? string.Empty : $"&subCategoryId={subCategory}";
-        var requestUri = $"https://api.store.finalfantasyxiv.com/ffxivcatalog/api/products/?lang={CultureInfo.CurrentCulture.Name}&currency=USD&limit={limit}&offset={offset}{categoryID}{subCategoryID}";
-        var result = await httpClient.GetFromJsonAsync<StoreVM>(requestUri);
-
-        if (result != null && result.products != null)
-        {
-            store.products?.AddRange(result.products);
-            offset += 40;
-        }
-
+        await this.LoadProducts();
         StateHasChanged();
     }
 
@@ -182,10 +242,10 @@
 
 
 <script>
-    window.initScrollDetection = (dotnetHelper, elementId) => {
+   window.initScrollDetection = (dotnetHelper, elementId) => {
         const element = document.getElementById(elementId);
         element.addEventListener('scroll', () => {
-            if (element.scrollHeight - element.scrollTop === element.clientHeight) {
+            if (element.scrollHeight - element.scrollTop <= element.clientHeight + 1) {
                 dotnetHelper.invokeMethodAsync('OnScrollToBottom');
             }
         });
