@@ -41,3 +41,9 @@ FFXIVLazyStore 是一個基於 .NET 8.0 和 Blazor 的網頁應用程式，用�
 ```sh
 dotnet ef dbcontext scaffold "Server={ServerIP};Port=3306;Database=houseofsnow;Uid=root;Pwd={YourPassword};TreatTinyAsBoolean=true" Pomelo.EntityFrameworkCore.MySql -o Model --force
 ```
+
+---
+
+FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.
+
+FINAL FANTASY XIV © SQUARE ENIX CO., LTD.

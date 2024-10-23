@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager navigationManager
 
 @* <AuthorizeView>
     <Authorized>
@@ -34,14 +35,14 @@
 
 <RadzenLayout Style="grid-template-areas: 'rz-sidebar rz-header' 'rz-sidebar rz-body'">
     <RadzenHeader>
-        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start">
-            <RadzenColumn Size="10">
-                <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
-            </RadzenColumn>
-            <RadzenColumn Size="2">
+        <div class="header">
+            <RadzenSidebarToggle class="menu-toggle" Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+            <div class="right-controls">
                 <CultureSelector />
-            </RadzenColumn>
-        </RadzenRow>
+               @*  <RadzenButton Shade="Shade.Lighter" Text="Login" ButtonStyle="ButtonStyle.Primary" Click="@(() => navigationManager.NavigateTo("Login"))" /> *@
+            </div>
+        </div>
+
     </RadzenHeader>
     <RadzenSidebar @bind-Expanded="@sidebarExpanded">
         <NavMenu />
@@ -62,3 +63,38 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+<style scoped>
+    .header {
+        background-color: #ffffff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 64px;
+    }
+
+    .menu-toggle {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #333;
+        padding: 0.5rem;
+    }
+
+    .right-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .language-select {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #fff;
+        cursor: pointer;
+    }
+</style>

@@ -9,6 +9,11 @@
     <Columns>
         <RadzenDataGridColumn Property="@nameof(FavoriteProduct.Id)" Filterable="false" Title="Id" Frozen="true" Width="100px" TextAlign="TextAlign.Center" />
         <RadzenDataGridColumn Property="@nameof(FavoriteProduct.Name)" Filterable="false" Title="Name" Frozen="true" Width="100px" TextAlign="TextAlign.Center" />
+        <RadzenDataGridColumn Title="縮圖" Frozen="true" Sortable="false" Filterable="false" Width="80px" TextAlign="TextAlign.Center">
+            <Template Context="data">
+                <RadzenImage Path="@data.Image" Style="width: 50px;height:50px;" />
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn Title="連結" Frozen="true" Sortable="false" Filterable="false" Width="80px" TextAlign="TextAlign.Center">
             <Template Context="data">
                 <RadzenLink Path="@($"https://store.finalfantasyxiv.com/ffxivstore/en-us/product/{data.Id}")" Target="_blank" Text="商城連結" />

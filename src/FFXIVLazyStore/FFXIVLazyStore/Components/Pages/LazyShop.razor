@@ -175,18 +175,18 @@
         }
         else
         {
-            storageList.Add(new FavoriteProduct { Id = product.Id, Name = product.Name });
+            storageList.Add(new FavoriteProduct { Id = product.Id, Name = product.Name, Image = product.ThumbnailUrl });
             await ProtectedLocalStorage.SetAsync("favorite", storageList);
         }
 
         product.IsFavorite = !product.IsFavorite;
 
-        NotificationService.Notify(new NotificationMessage 
-        { 
-          Severity = NotificationSeverity.Success, 
-          Summary = "已經加入我的最愛", 
-          Detail = product.Name,
-          Duration = 4000 
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = product.IsFavorite ? NotificationSeverity.Success : NotificationSeverity.Error,
+            Summary = product.IsFavorite ? "已經加入我的最愛" : "已經移除我的最愛",
+            Detail = product.Name,
+            Duration = 4000
         });
     }
 

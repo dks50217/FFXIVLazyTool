@@ -39,6 +39,14 @@ builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>
 
 var app = builder.Build();
 
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Add(
+        "Content-Security-Policy",
+        "frame-ancestors https://*.dks50217.xyz");
+    await next();
+});
+
 var supportedCultures = new[] { "en-US", "ja-JP" };
 var localizationOptions = new RequestLocalizationOptions()
     .SetDefaultCulture(supportedCultures[0])
