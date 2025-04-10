@@ -1,6 +1,6 @@
-# FFXIVLazyStore
+# FFXIVLazyTool
 
-FFXIVLazyStore 是一個基於 .NET 8.0 和 Blazor 的網頁應用程式，用於管理 Final Fantasy XIV 的虛擬商店。
+FFXIVLazyTool 是一個基於 .NET 8.0 和 Blazor 的懶人用網頁應用程式，用於管理 Final Fantasy XIV 的虛擬商店等功能
 
 - 收藏商品
 - 無限滾動自動讀取剩餘商品
@@ -25,13 +25,13 @@ FFXIVLazyStore 是一個基於 .NET 8.0 和 Blazor 的網頁應用程式，用�
 
 1. 克隆這個儲存庫：
     ```sh
-    git clone https://github.com/dks50217/FFXIVLazyStore.git
+    git clone https://github.com/dks50217/FFXIVLazyTool.git
     cd FFXIVLazyStore
     ```
 
 2. 透過命令列建置專案：
     ```sh
-    dotnet build src/FFXIVLazyStore/FFXIVLazyStore.sln
+    dotnet build src/FFXIVLazyStore/FFXIVLazyTool.sln
     ```
 
 3. 執行應用程式：
