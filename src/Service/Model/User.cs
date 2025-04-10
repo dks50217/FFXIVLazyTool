@@ -9,7 +9,9 @@ public partial class User
 
     public string Name { get; set; } = null!;
 
+    public string Password { get; set; } = null!;
+
     public string? RefreshToken { get; set; }
 
-    public string TotpKey { get; set; } = null!;
+    public string? TotpKey { get; set; }
 }

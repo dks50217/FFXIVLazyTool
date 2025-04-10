@@ -9,7 +9,7 @@ namespace Core.Helper
 {
     public class PasswordHasherHelper
     {
-        private static byte[] GenerateSalt(int size = 16)
+        public static byte[] GenerateSalt(int size = 16)
         {
             var salt = new byte[size];
             RandomNumberGenerator.Fill(salt);

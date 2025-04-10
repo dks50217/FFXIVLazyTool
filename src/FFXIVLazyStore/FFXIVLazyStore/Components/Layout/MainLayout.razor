@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager navigationManager
+@inject ThemeService themeService
 
 @* <AuthorizeView>
     <Authorized>
@@ -39,7 +40,10 @@
             <RadzenSidebarToggle class="menu-toggle" Click="@(() => sidebarExpanded = !sidebarExpanded)" />
             <div class="right-controls">
                 <CultureSelector />
-               @*  <RadzenButton Shade="Shade.Lighter" Text="Login" ButtonStyle="ButtonStyle.Primary" Click="@(() => navigationManager.NavigateTo("Login"))" /> *@
+                <RadzenButton Shade="Shade.Lighter" Text="Login" ButtonStyle="ButtonStyle.Primary" Click="@(() => navigationManager.NavigateTo("Login"))" />
+                <RadzenAppearanceToggle ButtonStyle="ButtonStyle.Info" 
+                                        ToggleButtonStyle="ButtonStyle.Info" 
+                                        Variant="Variant.Outlined" />
             </div>
         </div>
 
@@ -97,4 +101,5 @@
         background-color: #fff;
         cursor: pointer;
     }
+
 </style>

@@ -15,6 +15,12 @@ FFXIVLazyStore 是一個基於 .NET 8.0 和 Blazor 的網頁應用程式，用�
 - Radzen.Blazor
 - Pomelo.EntityFrameworkCore.MySql
 
+## 資料來源
+- [PaissaDB](https://zhu.codes/paissa)
+- [NetStone](https://github.com/xivapi/NetStone)
+- [FFXIVStore](https://store.finalfantasyxiv.com/ffxivstore/en-us/)
+- [FauxHollowsProbabilisticSolver](https://github.com/Sturalke/FauxHollowsProbabilisticSolver)
+
 ### 建置與執行
 
 1. 克隆這個儲存庫：

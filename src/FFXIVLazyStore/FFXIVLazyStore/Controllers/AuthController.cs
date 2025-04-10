@@ -40,14 +40,11 @@ namespace FFXIVLazyStore.Controllers
         [HttpPost("Signup")]
         public async Task<IActionResult> Signup([FromBody] SignupRequest model)
         {
-            bool isValid = TOTPHelper.ValidateTotp(model.Secret, model.Password);
+            var salt = PasswordHasherHelper.GenerateSalt();
 
-            if (isValid == false)
-            {
-                throw new Exception("isValid false");
-            }
+            var hashPassword = PasswordHasherHelper.HashPassword(model.Password, salt);
 
-            bool isSignup = await _authService.SignUp(model.Account, model.Secret);
+            bool isSignup = await _authService.SignUp(model.Account, hashPassword);
 
             if (isSignup == false)
             {

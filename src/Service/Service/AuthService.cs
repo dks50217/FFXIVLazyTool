@@ -14,7 +14,7 @@ namespace Service.Service
 {
     public interface IAuthService
     {
-        Task<bool> SignUp(string account, string totpkey);
+        Task<bool> SignUp(string account, string password);
         Task<bool> Login(string account, string password);
     }
 
@@ -36,12 +36,12 @@ namespace Service.Service
                 return false;
             }
 
-            var isSuccess = TOTPHelper.ValidateTotp(secret: result.TotpKey, code: password);
+            var isSuccess = PasswordHasherHelper.VerifyPassword(password, result.Password);
 
             return isSuccess;
         }
 
-        public async Task<bool> SignUp(string account, string totpkey)
+        public async Task<bool> SignUp(string account, string password)
         {
             try
             {
@@ -55,14 +55,14 @@ namespace Service.Service
                 User user = new User
                 {
                     Name = account,
-                    TotpKey = totpkey
+                    Password = password
                 };
 
                 await _context.Set<User>().AddAsync(user);
                 await _context.SaveChangesAsync();
                 return true;
             }
-            catch
+            catch(Exception ex)
             {
                 return false;
             }

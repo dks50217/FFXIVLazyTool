@@ -18,10 +18,6 @@ public partial class HouseofsnowContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseMySql("server=192.168.1.195;port=3306;database=houseofsnow;uid=root;pwd=22662266;treattinyasboolean=true", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.3.0-mysql"));
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -40,6 +36,9 @@ public partial class HouseofsnowContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(50)
                 .HasColumnName("name");
+            entity.Property(e => e.Password)
+                .HasMaxLength(200)
+                .HasColumnName("password");
             entity.Property(e => e.RefreshToken)
                 .HasMaxLength(200)
                 .HasColumnName("refresh_token");

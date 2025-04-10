@@ -3,54 +3,43 @@
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthStateProvider
+@inject DialogService DialogService
 
-<div class="login-container">
-    @if (isSignup)
-    {
-        <h2>Sign up</h2>
+<PageTitle>Login</PageTitle>
 
-        @if (!string.IsNullOrEmpty(signupResponse.Secret))
-        {
-            <RadzenStack Orientation="Orientation.Vertical">
-                <RadzenFormField Text="帳號" Style="width: 100%;">
-                    <RadzenTextBox Style="width: 100%" @bind-Value=login.Account />
-                </RadzenFormField>
-                <img id="qrcode" src="@($"data:image/png;base64,{Convert.ToBase64String(signupResponse.QrCode)}")" style="width: 200px; height: 200px; display: block; margin: 0 auto;" />
-                <RadzenSecurityCode @bind-Value=@login.Password Count="6" Gap="10" Type="SecurityCodeType.Numeric" />
-            </RadzenStack>
-            <br />
-            <RadzenStack Orientation="Orientation.Vertical">
-                <RadzenButton Click=@(args => HandleSignup()) Text="註冊" ButtonStyle="ButtonStyle.Success" />
-@*                 <RadzenButton Click=@(args => isSignup = false) Text="登錄" ButtonStyle="ButtonStyle.Info" /> *@
-            </RadzenStack>
-        }
-    }
-    else
-    {
-        <h2>Login</h2>
-        <RadzenStack Orientation="Orientation.Vertical">
-            <RadzenFormField Text="帳號" Style="width: 100%;">
-                <RadzenTextBox Style="width: 100%" @bind-Value=login.Account />
-            </RadzenFormField>
-            <RadzenSecurityCode @bind-Value=@login.Password Count="6" Gap="10" Type="SecurityCodeType.Numeric" />
-        </RadzenStack>
-        <br />
-        <RadzenStack Orientation="Orientation.Vertical">
-            <RadzenButton Click=@(args => HandleLogin()) Text="Login" ButtonStyle="ButtonStyle.Success" />
-           @*  <RadzenButton Click=@(args => HandleInitSignup()) Text="註冊" ButtonStyle="ButtonStyle.Info" /> *@
-        </RadzenStack>
-    }
+<RadzenStack Gap="0" class="rz-my-12 rz-mx-auto rz-border-radius-6 rz-shadow-10" Style="width: 100%; max-width: 400px; overflow: hidden;">
+    <RadzenCard class="rz-shadow-0 rz-border-radius-0 rz-background-color-info rz-p-12" style="text-align: center;">
+        <RadzenText TextStyle="TextStyle.DisplayH3" TagName="TagName.H2" class="rz-color-white rz-mb-0">Login</RadzenText>
+    </RadzenCard>
+    <RadzenCard class="rz-shadow-0 rz-p-12">
+        <RadzenTemplateForm Data=login>
+            <RadzenLogin AllowRegister="false" 
+                         AllowResetPassword="false" 
+                         UserText="Account"
+                         UserRequired="Account is required"
+                         PasswordText="Password"
+                         PasswordRequired="Password is required"
+                         Login=@(args => HandleLogin(args)) 
+                         Username="@login.Account" 
+                         Password="@login.Password"
+                         Register=HandleSignup />
+        </RadzenTemplateForm>
+    </RadzenCard>
+</RadzenStack>
 
-    <br />
-
-    <RadzenLabel Text="Login"/>
-    <RadzenSwitch @bind-Value=@value Change=@(args => OnSwitchChange(args)) />
-    <RadzenLabel Text="Sign up"/>
-</div>
+@if (isShowLoading)
+{
+    <div class="fullscreen-overlay">
+        <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large">
+            <Template>Wait</Template>
+        </RadzenProgressBarCircular>
+    </div>
+}
 
 @code {
     private bool isSignup { get; set; } = false;
     private bool value { get; set; } = false;
+    private bool isShowLoading { get; set; } = false;
 
     private SignupResponse signupResponse = new SignupResponse()
     {
@@ -83,26 +72,45 @@
         }
     }
 
-    private async Task HandleLogin()
+    private async Task HandleLogin(LoginArgs args)
     {
-        var response = await Http.PostAsJsonAsync("Auth/Login", this.login);
-
-        if (response.IsSuccessStatusCode)
+        try
         {
+            login.Account = args.Username;
+            login.Password = args.Password;
+
+            isShowLoading = true;
+
+            var response = await Http.PostAsJsonAsync("Auth/Login", login);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var message = await response.Content.ReadAsStringAsync();
+                throw new Exception(message);
+            }
+
             var content = await response.Content.ReadAsStringAsync();
             var result = System.Text.Json.JsonSerializer.Deserialize<LoginModelResponse>(content, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            
+
             LoginUserInfo loginUserInfo = new LoginUserInfo()
             {
-                UserName = this.login.Account,
+                UserName = login.Account,
                 AccessToken = result.Token,
                 RefreshToken = result.Token,
                 ExpiresAt = DateTime.Now.AddMinutes(30)
             };
-            
+
             var customAuthStateProvider = (CustomAuthStateProvider)AuthStateProvider;
             await customAuthStateProvider.UpdateState(loginUserInfo);
             NavigationManager.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            DialogService.Alert(ex.Message);
+        }
+        finally
+        {
+            isShowLoading = false;
         }
     }
 
@@ -123,7 +131,33 @@
 
     private async Task HandleSignup()
     {
-        this.signup.Secret = signupResponse.Secret;
-        var response = await Http.PostAsJsonAsync("Auth/Signup", this.signup);
+        var response = await Http.PostAsJsonAsync("Auth/Signup", signup);
+
+        DialogService.Close();
+
+        if (response.IsSuccessStatusCode)
+        {
+            await DialogService.Alert("Success", "Sign up success", new AlertOptions() { OkButtonText = "OK" });
+            isSignup = false;
+        }
+        else
+        {
+
+        }
     }
 }
+
+<style>
+    .fullscreen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+</style>

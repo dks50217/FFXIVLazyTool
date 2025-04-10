@@ -6,11 +6,12 @@
 @inject NavigationManager navigationManager
 @inject IJSRuntime jsRuntime
 @inject ContextMenuService ContextMenuService
+@using FFXIVLazyStore.Service
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Radzen.Blazor.Rendering
 @rendermode InteractiveAuto
 @inject DialogService DialogService
-@inject ProtectedLocalStorage ProtectedLocalStorage
+@inject IProtectLocalStorageService ProtectedLocalStorage
 @inject NotificationService NotificationService
 
 <PageTitle>LazyShop</PageTitle>
@@ -135,14 +136,18 @@
 
     private async Task GetProductItems(Product product)
     {
-        if (product.items != null) return;
-        var requestUri = $"https://api.store.finalfantasyxiv.com/ffxivcatalog/api/products/{product.Id}?lang=en-us&currency=USD";
-        var result = await httpClient.GetFromJsonAsync<ProductVM>(requestUri);
-
-        if (result != null && result.product != null)
+        if (product.items == null)
         {
-            product.items = result.product.items;
+            var requestUri = $"https://api.store.finalfantasyxiv.com/ffxivcatalog/api/products/{product.Id}?lang=en-us&currency=USD";
+            var result = await httpClient.GetFromJsonAsync<ProductVM>(requestUri);
+
+            if (result != null && result.product != null)
+            {
+                product.items = result.product.items;
+            }
         }
+
+        if (product.items == null) return;
 
         var dialogResult = await DialogService.OpenAsync("商品內容", ds =>
         @<RadzenStack Gap="1.5rem">

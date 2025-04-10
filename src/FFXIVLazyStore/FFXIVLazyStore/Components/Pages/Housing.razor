@@ -1,0 +1,169 @@
+﻿@page "/Housing"
+@inject HttpClient httpClient
+@inject NavigationManager navigationManager
+@inject IJSRuntime jsRuntime
+
+<PageTitle>Housing</PageTitle>
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Gap="0.5rem" class="rz-p-sm-12">
+    <RadzenLabel Text="選擇區域" Component="DropDownClear" />
+    <RadzenDropDown @bind-Value=@selectDistrict Data=@districts TextProperty="Item2" ValueProperty="Item1" AllowClear=true Placeholder="選擇區域" Style="width: 100%; max-width: 200px;" Name="DropDownClear" />
+    <RadzenLabel Text="選擇大小" Component="DropDownClear" />
+    <RadzenDropDown @bind-Value=@selectSize Data=@sizes TextProperty="Item2" ValueProperty="Item1" AllowClear=true Placeholder="" Style="width: 100%; max-width: 100px;" Name="DropDownClear" />
+</RadzenStack>
+
+
+下次抽選時間: @phaseEnds 
+
+@if (house.districts is not null)
+{
+    @foreach (var item in house.districts.Where(d => selectDistrict == null || d.id == selectDistrict))
+    {
+        <RadzenCard class="rz-my-12 rz-mx-auto">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1rem" class="rz-p-4">
+                <RadzenStack Gap="0">
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-2 rz-my-0">District Name</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@($"{mapDict[item.id]}({item.name})")</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Number of Open Plots</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@(item.num_open_plots)</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Oldest Plot Time</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@(DateTimeOffset.FromUnixTimeSeconds((long)item.oldest_plot_time).DateTime)</b></RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1rem" class="rz-p-4">
+                <RadzenDataGrid Data="@item.open_plots.Where(o => selectSize == null || o.size == selectSize)" TItem="OpenPlot" AllowSorting="true" AllowPaging="true" AllowGrouping="true">
+                    <Columns>
+                        <RadzenDataGridColumn Title="區域">
+                            <Template Context="data">
+                                @($"{data.ward_number}-{data.plot_number}")
+                            </Template>
+                        </RadzenDataGridColumn>
+@* 
+                        <RadzenDataGridColumn TItem="OpenPlot" Property="plot_number" Title="Plot Number" />
+                        <RadzenDataGridColumn TItem="OpenPlot" Property="ward_number" Title="Ward Number" /> *@
+                        <RadzenDataGridColumn Title="Size">
+                            <Template Context="data">
+                                @(sizeDict[data.size])
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Title="Price">
+                            <Template Context="data">
+                                @data.price.ToString("N0")
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Title="Last Updated Time">
+                            <Template Context="data">
+                                @(DateTimeOffset.FromUnixTimeSeconds((long)data.last_updated_time).DateTime)
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenStack>
+        </RadzenCard>
+    }
+}
+else
+{
+    <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large">
+        <Template>Wait</Template>
+    </RadzenProgressBarCircular>
+}
+
+
+@code {
+    private int? selectDistrict;
+    private int? selectSize;
+    private string? phaseEnds;
+
+    List<Tuple<int, string>> districts;
+    List<Tuple<int, string>> sizes;
+
+    private Dictionary<int, string> mapDict = new Dictionary<int, string>()
+    {
+        {339, "海都"},
+        {341, "沙都"},
+        {340, "森都"},
+        {979, "山都"},
+        {641, "白銀鄉"}
+    };
+
+    private Dictionary<int, string> sizeDict = new Dictionary<int, string>()
+    {
+        {0, "S"},
+        {1, "M"},
+        {2, "L"},
+    };
+
+    private List<FreePlot> freePlots = new List<FreePlot>();
+
+    private HouseVM house = new HouseVM()
+    {
+        id = 69,
+        name = "Bahamut",
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (house.districts is null)
+        {
+            await LoadHouses();
+        }
+
+        districts = mapDict.Select(kvp => Tuple.Create(kvp.Key, kvp.Value)).ToList();
+        sizes = sizeDict.Select(kvp => Tuple.Create(kvp.Key, kvp.Value)).ToList();
+        phaseEnds = NextOrLatestPhaseChange();
+    }
+
+    public async Task LoadHouses()
+    {
+        var requestUri = "https://paissadb.zhu.codes/worlds/69";
+        var result = await httpClient.GetFromJsonAsync<HouseVM>(requestUri);
+
+        if (result != null)
+        {
+            house = result;
+            ProcessHouseData();
+        }
+    }
+
+    private void ProcessHouseData()
+    {
+        const int LOTTERY_MASK = 1;
+        const int INDIVIDUAL_MASK = 4;
+
+        foreach (var district in house.districts)
+        {
+            district.open_plots.ForEach(o =>
+            {
+                o.ward_number++;
+                o.plot_number++;
+            });
+        }
+    }
+
+    private string NextOrLatestPhaseChange()
+    {
+        DateTimeOffset currentTime = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(8));
+
+        List<DateTimeOffset> phaseTimes = house.districts.SelectMany(s => s.open_plots)
+            .Select(d => d.lotto_phase_until.HasValue ? DateTimeOffset.FromUnixTimeSeconds((long)d.lotto_phase_until.Value).ToOffset(TimeSpan.FromHours(8)) : (DateTimeOffset?)null)
+            .Where(d => d.HasValue)
+            .Select(d => d.Value)
+            .OrderBy(d => d)
+            .ToList();
+
+        DateTimeOffset? nextPhaseTime = phaseTimes.FirstOrDefault(d => d > currentTime);
+
+        DateTimeOffset finalPhaseTime = nextPhaseTime ?? (phaseTimes.Count > 0 ? phaseTimes.Last() : currentTime);
+
+        return finalPhaseTime.ToString("yyyy/MM/dd");
+    }
+
+    private class FreePlot
+    {
+        public string district { get; set; }
+        public int ward { get; set; }
+        public int plot { get; set; }
+        public int? lotto_entries { get; set; }
+    }
+}

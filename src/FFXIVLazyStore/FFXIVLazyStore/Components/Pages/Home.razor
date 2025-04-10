@@ -1,7 +1,94 @@
 ﻿@page "/"
+@using Core.Service
+@using FFXIVLazyStore.Model.Setting
+@using Microsoft.Extensions.Options
+@using NetStone.Model.Parseables.FreeCompany.Members
+@using NetStone.Model.Parseables.Search.FreeCompany
+@inject HttpClient httpClient
+@inject NavigationManager navigationManager
+@inject IJSRuntime jsRuntime
+@inject INetStoneService netStoneService
+@inject IConfiguration configuration
+@inject IOptions<HomeSetting> homeOptions
 
 @inject DialogService DialogService
 
 <PageTitle>Home</PageTitle>
 
-<h1>Home</h1>
+<RadzenCard Variant="Variant.Filled" class="rz-my-12 rz-mx-auto">
+    @if (Entry != null)
+    {
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1rem" class="rz-p-4">
+
+            <div style="position: relative; width: 100px; height: 100px; border-radius: 50%;">
+                <!-- Bottom Layer -->
+                <RadzenImage Path="@Entry.CrestLayers.BottomLayer?.AbsoluteUri" Style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" />
+                <!-- Middle Layer -->
+                <RadzenImage Path="@Entry.CrestLayers.MiddleLayer?.AbsoluteUri" Style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" />
+                <!-- Top Layer -->
+                <RadzenImage Path="@Entry.CrestLayers.TopLayer?.AbsoluteUri" Style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" />
+            </div>
+
+            <RadzenStack Gap="0">
+                <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-2 rz-my-0">FC Name</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1"><b>@Entry.Name</b></RadzenText>
+                <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Server</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1"><b>@($"{Entry.Server} ({Entry.Datacenter})")</b></RadzenText>
+                <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Members</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1"><b>@Entry.ActiveMembers</b></RadzenText>
+            </RadzenStack>
+        </RadzenStack>
+    }
+    else
+    {
+        <Loader Text="載入部隊資訊中"></Loader>
+    }
+</RadzenCard>
+
+
+@if (Members != null)
+{
+    @foreach (var memberRow in Members.Chunk(3))
+    {
+        <RadzenCardGroup>
+            @foreach (var item in memberRow)
+            {
+                <RadzenCard Variant="@Variant.Filled" class="rz-my-8 rz-mx-auto" Style="max-width: 420px">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1rem" class="rz-p-4">
+                        <RadzenImage Path="@item.Avatar?.AbsoluteUri" Style="width: 100px; height: 100px; border-radius: 50%;" />
+                        <RadzenStack Gap="0">
+                            <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-2 rz-my-0">Name</RadzenText>
+                            <RadzenLink Path="@($"https://na.finalfantasyxiv.com/lodestone/character/{item.Id}")" Target="_blank" Text="@item.Name"></RadzenLink>
+                            <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Rank</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1"><b>@(item.FreeCompanyRank)</b></RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            }
+        </RadzenCardGroup>
+    }
+}
+
+@code {
+    private FreeCompanySearchEntry? Entry { get; set; }
+
+    private IEnumerable<FreeCompanyMembersEntry>? Members { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (homeOptions is null) 
+            return;
+
+        if (string.IsNullOrEmpty(homeOptions.Value.FreeCompany) || string.IsNullOrEmpty(homeOptions.Value.World))
+            return;
+
+        if (Entry == null)
+        {
+            await netStoneService.InitializeAsync();
+
+            Entry = await netStoneService.GetFCInformation(homeOptions.Value.FreeCompany, homeOptions.Value.World);
+
+            Members = await netStoneService.GetFCMembers(Entry.Id);
+        }
+    }
+}

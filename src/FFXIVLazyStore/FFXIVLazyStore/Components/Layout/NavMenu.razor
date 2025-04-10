@@ -2,6 +2,8 @@
 @inject HttpClient httpClient
 @inject NavigationManager navigationManager
 
+<PageTitle>幻巧工具</PageTitle>
+
 <RadzenStack AlignItems="AlignItems.Center" class="rz-p-12">
     <RadzenPanelMenu Style="width:300px">
         <RadzenPanelMenuItem Text="Home" Icon="Home" Path="/"></RadzenPanelMenuItem>
@@ -24,6 +26,8 @@
                 }
             }
         </RadzenPanelMenuItem>
+        <RadzenPanelMenuItem Text="空房子" Icon="Home" Path="Housing"></RadzenPanelMenuItem>
+        <RadzenPanelMenuItem Text="幻巧工具" Icon="compare_arrows" Path="FauxHollowsSolver"></RadzenPanelMenuItem>
     </RadzenPanelMenu>
 </RadzenStack>
 
