@@ -38,20 +38,24 @@
                                 @($"{data.ward_number}-{data.plot_number}")
                             </Template>
                         </RadzenDataGridColumn>
-@* 
-                        <RadzenDataGridColumn TItem="OpenPlot" Property="plot_number" Title="Plot Number" />
-                        <RadzenDataGridColumn TItem="OpenPlot" Property="ward_number" Title="Ward Number" /> *@
-                        <RadzenDataGridColumn Title="Size">
+
+                        <RadzenDataGridColumn Title="類型">
+                            <Template Context="data">
+                                @(GetPurchaseTypeLabel(data.purchase_system))
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Title="大小">
                             <Template Context="data">
                                 @(sizeDict[data.size])
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn Title="Price">
+                        <RadzenDataGridColumn Title="價格">
                             <Template Context="data">
                                 @data.price.ToString("N0")
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn Title="Last Updated Time">
+                        <RadzenDataGridColumn Title="最後更新時間">
                             <Template Context="data">
                                 @(DateTimeOffset.FromUnixTimeSeconds((long)data.last_updated_time).DateTime)
                             </Template>
@@ -71,6 +75,7 @@ else
 
 
 @code {
+
     private int? selectDistrict;
     private int? selectSize;
     private string? phaseEnds;
@@ -93,6 +98,13 @@ else
         {1, "M"},
         {2, "L"},
     };
+
+    private static class PurchaseTypes
+    {
+        public const int LOTTERY = 1;
+        public const int FREE_COMPANY = 2;
+        public const int INDIVIDUAL = 4;
+    }
 
     private List<FreePlot> freePlots = new List<FreePlot>();
 
@@ -128,9 +140,6 @@ else
 
     private void ProcessHouseData()
     {
-        const int LOTTERY_MASK = 1;
-        const int INDIVIDUAL_MASK = 4;
-
         foreach (var district in house.districts)
         {
             district.open_plots.ForEach(o =>
@@ -157,6 +166,22 @@ else
         DateTimeOffset finalPhaseTime = nextPhaseTime ?? (phaseTimes.Count > 0 ? phaseTimes.Last() : currentTime);
 
         return finalPhaseTime.ToString("yyyy/MM/dd");
+    }
+
+    private string GetPurchaseTypeLabel(int e)
+    {
+        if ((e & (PurchaseTypes.FREE_COMPANY | PurchaseTypes.INDIVIDUAL)) == (PurchaseTypes.FREE_COMPANY | PurchaseTypes.INDIVIDUAL))
+        {
+            return "公會/個人";
+        }
+        else if ((e & PurchaseTypes.FREE_COMPANY) != 0)
+        {
+            return "公會";
+        }
+        else
+        {
+            return "個人";
+        }
     }
 
     private class FreePlot

@@ -1,10 +1,12 @@
 # FFXIVLazyStore
 
-FFXIVLazyStore 是一個基於 .NET 8.0 和 Blazor 的網頁應用程式，用於管理 Final Fantasy XIV 的虛擬商店。
+FFXIVLazyTool 是一個基於 .NET 8.0 和 Blazor 的懶人用網頁應用程式，用於管理 Final Fantasy XIV 的虛擬商店等功能。
 
 - 收藏商品
 - 無限滾動自動讀取剩餘商品
 - 導向灰機與官方連結
+- 幻巧工具
+- AI小幫手
 
 ### 先決條件
 
@@ -23,7 +25,7 @@ FFXIVLazyStore 是一個基於 .NET 8.0 和 Blazor 的網頁應用程式，用�
 
 ### 建置與執行
 
-1. 克隆這個儲存庫：
+1. Clone這個儲存庫：
     ```sh
     git clone https://github.com/dks50217/FFXIVLazyStore.git
     cd FFXIVLazyStore
@@ -34,19 +36,24 @@ FFXIVLazyStore 是一個基於 .NET 8.0 和 Blazor 的網頁應用程式，用�
     dotnet build src/FFXIVLazyStore/FFXIVLazyStore.sln
     ```
 
-3. 執行應用程式：
+3. `Appsetting.json` 設定環境變數
+
+   ```json
+   "AzureInference": {
+        "Model": "openai/gpt-4.1", // or other model
+        "ApiKey": "", // Github models key - free
+        "Endpoint": "https://models.github.ai/inference"
+    },
+    "Home": {
+        "FreeCompany": "", // Free Company name
+        "World": "" // Bahamut or others
+    }
+   ```
+
+4. 執行應用程式：
     ```sh
     dotnet run --project src/FFXIVLazyStore/FFXIVLazyStore/FFXIVLazyStore.csproj
     ```
-
-### TODO
-
-## 資料庫設定 - 後續加入驗證
-
-使用以下命令來生成資料庫上下文：
-```sh
-dotnet ef dbcontext scaffold "Server={ServerIP};Port=3306;Database=houseofsnow;Uid=root;Pwd={YourPassword};TreatTinyAsBoolean=true" Pomelo.EntityFrameworkCore.MySql -o Model --force
-```
 
 ---
 

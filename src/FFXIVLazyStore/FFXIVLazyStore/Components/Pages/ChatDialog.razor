@@ -1,0 +1,112 @@
+﻿@using Azure.AI.Inference
+@using Core.Service
+@inject IAzureInferenceChatService ChatService
+@inject IJSRuntime JSRuntime
+
+<div class="chat-container">
+    <div class="chat-messages" @ref="chatContainer">
+        @foreach (var msg in Messages.Where(m => m.IsInitContent == false))
+        {
+            <div class="chat-bubble @(msg.IsUser ? "user" : "ai")">
+                @msg.Content
+            </div>
+        }
+
+        @if (IsLoading)
+        {
+            <div class="chat-bubble ai typing">AI 思考中...</div>
+        }
+    </div>
+
+    <div class="chat-input">
+        <textarea class="chat-textarea"
+        @bind="UserInput"
+        placeholder="輸入訊息發問..." />
+        <RadzenButton Text="Send" Click="SendMessage" Disabled="@IsLoading" Style="margin-top: 5px;" />
+    </div>
+</div>
+
+@code {
+    private ElementReference chatContainer;
+    private string UserInput = string.Empty;
+    private bool IsLoading = false;
+    private bool IsSystemMessageInit = false;
+
+    private List<ChatMessage> Messages = new();
+
+    private string SystemMessage = @"
+我是一位專業的《Final Fantasy XIV》資料庫助理，只回答與 FFXIV 有關的問題，包括但不限於：
+
+- 任務、劇情、職業、技能
+- 裝備、製作、採集、戰鬥機制
+- 地圖、副本、BOSS 攻略
+- 遊戲內用語與系統（如 HUD、熱鍵、自動化）
+
+請避免回答與 FFXIV 無關的問題，並在超出範圍時回覆：『這不屬於我支援的範圍，請問還有其他 FFXIV 的問題嗎？』
+請使用簡潔清楚的語氣回答問題，並盡可能提供實用的遊戲內資訊。
+";
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(UserInput) || IsLoading)
+            return;
+
+        Messages.Add(new ChatMessage { Content = UserInput, IsUser = true });
+        var input = UserInput;
+        UserInput = string.Empty;
+        IsLoading = true;
+
+        await ScrollToBottom();
+
+        try
+        {
+            if (IsSystemMessageInit == false)
+            {
+                Messages.Add(new ChatMessage { Content = SystemMessage, IsUser = false, IsInitContent = true });
+                IsSystemMessageInit = true;
+            }
+
+            var chatRequestMessages = ConvertToChatRequestMessages(Messages);
+            
+            var reply = await ChatService.GetChatCompletionAsync(chatRequestMessages);
+
+            Messages.Add(new ChatMessage { Content = reply, IsUser = false });
+        }
+        catch
+        {
+            Messages.Add(new ChatMessage { Content = "⚠️ Something went wrong.", IsUser = false });
+        }
+
+        IsLoading = false;
+        await ScrollToBottom();
+    }
+
+    private static List<ChatRequestMessage> ConvertToChatRequestMessages(List<ChatMessage> messages)
+    {
+        return messages.Select(m =>
+       (ChatRequestMessage)(m.IsUser
+           ? new ChatRequestUserMessage(m.Content)
+           : new ChatRequestAssistantMessage(m.Content))
+       ).ToList();
+    }
+
+    private async Task ScrollToBottom()
+    {
+        await JSRuntime.InvokeVoidAsync("scrollToBottom", chatContainer);
+    }
+
+    public class ChatMessage
+    {
+        public string Content { get; set; } = string.Empty;
+        public bool IsInitContent { get; set; }
+        public bool IsUser { get; set; }
+    }
+}
+
+<script>
+    function scrollToBottom(element) {
+        if (element) {
+            element.scrollTop = element.scrollHeight;
+        }
+    }
+</script>

@@ -28,6 +28,7 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<INetStoneService, NetStoneService>();
+builder.Services.AddScoped<IAzureInferenceChatService, AzureInferenceChatService>();
 
 builder.Services.AddDbContext<HouseofsnowContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),

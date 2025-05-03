@@ -1,6 +1,8 @@
-﻿@inherits LayoutComponentBase
+﻿@using FFXIVLazyStore.Components.Pages
+@inherits LayoutComponentBase
 @inject NavigationManager navigationManager
 @inject ThemeService themeService
+@inject DialogService dialogService
 
 @* <AuthorizeView>
     <Authorized>
@@ -56,10 +58,32 @@
     </RadzenBody>
 </RadzenLayout>
 
+
+<RadzenButton Icon="chat"
+              Style="position:fixed; bottom:20px; right:20px; z-index:1000;"
+              ButtonStyle="ButtonStyle.Primary"
+              Size="ButtonSize.Medium"
+              Click="OpenChat">
+</RadzenButton>
+
 <RadzenComponents @rendermode="InteractiveAuto" />
 
 @code {
     bool sidebarExpanded = true;
+
+    public async Task OpenChat()
+    {
+        await dialogService.OpenAsync<ChatDialog>("小幫手",
+            new Dictionary<string, object>(),
+            new DialogOptions()
+                {
+                    Width = "400px",
+                    Height = "600px",
+                    Draggable = true,
+                    Resizable = false,
+                    Style = "position:fixed; bottom:80px; right:20px; z-index:1050;"
+                });
+    }
 }
 
 <div id="blazor-error-ui">
