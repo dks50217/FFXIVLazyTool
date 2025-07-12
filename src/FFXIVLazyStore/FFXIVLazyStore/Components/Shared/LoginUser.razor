@@ -1,13 +1,11 @@
 ﻿@using FFXIVLazyStore.Service
 @using global::Service.Service
 @inject NavigationManager navigationManager
-@inject IJSRuntime jsRuntime
 @inject ICurrentUserService currentUser
-@inject IAuthService authService
 
 @if (string.IsNullOrEmpty(userName))
 {
-    <RadzenButton Shade="Shade.Lighter" Text="Login" ButtonStyle="ButtonStyle.Primary" Click="StartSSOLogin" />
+    <RadzenButton Shade="Shade.Lighter" Text="Login" ButtonStyle="ButtonStyle.Primary" Click="ToLogin" />
 }
 else
 {
@@ -34,10 +32,9 @@ else
         }
     }
 
-    private async Task StartSSOLogin()
+    private void ToLogin()
     {
-        var url = authService.GetSSOLoginUrl();
-        await jsRuntime.InvokeVoidAsync("eval", $"window.location.href = '{url}'");
+        navigationManager.NavigateTo("login", forceLoad: true);
     }
 
     private void StartLogout()

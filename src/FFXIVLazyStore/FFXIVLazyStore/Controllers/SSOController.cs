@@ -22,8 +22,11 @@ namespace FFXIVLazyStore.Controllers
         }
 
         [HttpGet("callback")]
-        public async Task<IActionResult> CallBack(string code)
+        public async Task<IActionResult> CallBack(string? code, string? error)
         {
+            if (string.IsNullOrEmpty(code))
+                return Redirect("/");
+
             var token = await _authService.ExchangeCodeForTokenAsync(code: code);
 
             if (token is null)

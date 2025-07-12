@@ -1,9 +1,13 @@
 ﻿@page "/Login"
+@using global::Service.Service
 @layout LoginLayout
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject DialogService DialogService
+@inject IAuthService authService
+@inject IJSRuntime jsRuntime
+
 
 <PageTitle>Login</PageTitle>
 
@@ -12,7 +16,8 @@
         <RadzenText TextStyle="TextStyle.DisplayH3" TagName="TagName.H2" class="rz-color-white rz-mb-0">Login</RadzenText>
     </RadzenCard>
     <RadzenCard class="rz-shadow-0 rz-p-12">
-        <RadzenTemplateForm Data=login>
+
+        @*   <RadzenTemplateForm Data=login>
             <RadzenLogin AllowRegister="false" 
                          AllowResetPassword="false" 
                          UserText="Account"
@@ -23,7 +28,16 @@
                          Username="@login.Account" 
                          Password="@login.Password"
                          Register=HandleSignup />
-        </RadzenTemplateForm>
+        </RadzenTemplateForm> *@
+
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
+            <RadzenButton ButtonStyle="ButtonStyle.Primary" Click="StartGoBack">Go back</RadzenButton>
+            <RadzenButton Image="images/microsoft.svg" ButtonStyle="ButtonStyle.Base" Click="StartSSOLogin">
+                <span class="rz-button-text">Microsoft account</span>
+                <RadzenImage Path="images/microsoft.svg" Style="width: 20px; height: 20px; margin-inline-start: 8px;" />
+            </RadzenButton>
+        </RadzenStack>
+
     </RadzenCard>
 </RadzenStack>
 
@@ -144,6 +158,18 @@
         {
 
         }
+    }
+
+
+    private async Task StartSSOLogin()
+    {
+        var url = authService.GetSSOLoginUrl();
+        await jsRuntime.InvokeVoidAsync("eval", $"window.location.href = '{url}'");
+    }
+
+    private void StartGoBack()
+    {
+        NavigationManager.NavigateTo("/");
     }
 }
 
