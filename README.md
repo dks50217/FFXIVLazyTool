@@ -44,6 +44,13 @@ FFXIVLazyTool 是一個基於 .NET 8.0 和 Blazor 的懶人用網頁應用程式
         "ApiKey": "", // Github models key - free
         "Endpoint": "https://models.github.ai/inference"
     },
+    "AzureOAuth": {
+        "ClientId": "", // Azure app Client Id
+        "Secret": "", // Azure app Secret
+        "EndPoint": "https://login.microsoftonline.com/common/oauth2/v2.0",
+        "TokenEndPolint": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+        "CallBackUrl": "" // Call Back Url
+    },
     "Home": {
         "FreeCompany": "", // Free Company name
         "World": "" // Bahamut or others
