@@ -1,0 +1,47 @@
+﻿@using FFXIVLazyStore.Service
+@using global::Service.Service
+@inject NavigationManager navigationManager
+@inject IJSRuntime jsRuntime
+@inject ICurrentUserService currentUser
+@inject IAuthService authService
+
+@if (string.IsNullOrEmpty(userName))
+{
+    <RadzenButton Shade="Shade.Lighter" Text="Login" ButtonStyle="ButtonStyle.Primary" Click="StartSSOLogin" />
+}
+else
+{
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" class="border-bottom border-primary">
+        <RadzenMenu>
+            <RadzenMenuItem Text="@userName" Icon="account_circle">
+                <RadzenMenuItem Text="Logout" Click="StartLogout"></RadzenMenuItem>
+            </RadzenMenuItem>
+        </RadzenMenu>
+    </RadzenStack>
+}
+
+@code {
+    private string? userName;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await currentUser.GetUserAsync();
+
+        if (user.Identity is not null)
+        {
+            userName = user.Identity.Name;
+        }
+    }
+
+    private async Task StartSSOLogin()
+    {
+        var url = authService.GetSSOLoginUrl();
+        await jsRuntime.InvokeVoidAsync("eval", $"window.location.href = '{url}'");
+    }
+
+    private void StartLogout()
+    {
+        navigationManager.NavigateTo("sso/logout", forceLoad: true);
+    }
+}

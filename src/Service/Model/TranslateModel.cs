@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace Core.Model
 {
-    public enum RoleModel
+    public class TranslateModel
     {
-        Guest,
-        User
+
     }
 }

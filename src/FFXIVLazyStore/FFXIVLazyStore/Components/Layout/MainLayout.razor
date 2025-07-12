@@ -1,6 +1,7 @@
 ﻿@using FFXIVLazyStore.Components.Pages
+@using FFXIVLazyStore.Service
+@using global::Service.Service
 @inherits LayoutComponentBase
-@inject NavigationManager navigationManager
 @inject ThemeService themeService
 @inject DialogService dialogService
 
@@ -40,12 +41,12 @@
     <RadzenHeader>
         <div class="header">
             <RadzenSidebarToggle class="menu-toggle" Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+
+
             <div class="right-controls">
                 <CultureSelector />
-                <RadzenButton Shade="Shade.Lighter" Text="Login" ButtonStyle="ButtonStyle.Primary" Click="@(() => navigationManager.NavigateTo("Login"))" />
-                <RadzenAppearanceToggle ButtonStyle="ButtonStyle.Info" 
-                                        ToggleButtonStyle="ButtonStyle.Info" 
-                                        Variant="Variant.Outlined" />
+                <LoginUser />
+                <RadzenAppearanceToggle ButtonStyle="ButtonStyle.Info" ToggleButtonStyle="ButtonStyle.Info" Variant="Variant.Outlined" />
             </div>
         </div>
 
@@ -60,10 +61,10 @@
 
 
 <RadzenButton Icon="chat"
-              Style="position:fixed; bottom:20px; right:20px; z-index:1000;"
-              ButtonStyle="ButtonStyle.Primary"
-              Size="ButtonSize.Medium"
-              Click="OpenChat">
+Style="position:fixed; bottom:20px; right:20px; z-index:1000;"
+ButtonStyle="ButtonStyle.Primary"
+Size="ButtonSize.Medium"
+Click="OpenChat">
 </RadzenButton>
 
 <RadzenComponents @rendermode="InteractiveAuto" />

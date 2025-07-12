@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using FFXIVLazyStore.Service;
 using FFXIVLazyStore.Model;
 using FFXIVLazyStore.Model.Setting;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,16 +20,25 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddRadzenComponents();
 
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    });
+
+builder.Services.AddAuthorization();
+
 builder.Services.AddHttpClient();
 
 builder.Services.AddLocalization();
 
 builder.Services.AddControllers();
 
-builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHttpClient<IAuthService, AuthService>();
 builder.Services.AddScoped<INetStoneService, NetStoneService>();
 builder.Services.AddScoped<IAzureInferenceChatService, AzureInferenceChatService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services.AddDbContext<HouseofsnowContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -42,7 +52,7 @@ builder.Services.AddScoped(sp =>
 
 builder.Services.Configure<HomeSetting>(builder.Configuration.GetSection("Home"));
 
-builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
+//builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 builder.Services.AddScoped<IProtectLocalStorageService, ProtectLocalStorageService>();
 
 builder.Logging.SetMinimumLevel(LogLevel.Warning);
@@ -77,6 +87,11 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
+
+app.UseCookiePolicy();
+app.UseAuthentication();
+app.UseAuthorization();
+
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

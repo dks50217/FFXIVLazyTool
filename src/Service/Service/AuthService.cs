@@ -2,70 +2,123 @@
 using Core.Helper.Core.Helper;
 using Core.Model;
 using Core.Repository;
+using HtmlAgilityPack.CssSelectors.NetCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Sockets;
+using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Service.Service
 {
     public interface IAuthService
     {
-        Task<bool> SignUp(string account, string password);
-        Task<bool> Login(string account, string password);
+        string GetSSOLoginUrl();
+        Task<TokenResponse?> ExchangeCodeForTokenAsync(string code);
+        Task<MicrosoftUserInfo?> GetUserInfoAsync(string accessToken);
     }
 
     public class AuthService : IAuthService
     {
-        private readonly HouseofsnowContext _context;
 
-        public AuthService(HouseofsnowContext context)
+        private readonly IConfiguration _configuration;
+
+        private readonly HttpClient _httpClient;
+
+        public AuthService(IConfiguration configuration, HttpClient httpClient)
         {
-            _context = context;
+            _configuration = configuration;
+            _httpClient = httpClient;
         }
 
-        public async Task<bool> Login(string account, string password)
+        public string GetSSOLoginUrl()
         {
-            var result = await _context.Users.Where(u => u.Name == account).FirstOrDefaultAsync();
+            var endPoint = _configuration["AzureOAuth:Endpoint"];
 
-            if (result == null)
-            {
-                return false;
-            }
+            if (string.IsNullOrEmpty(endPoint)) 
+                throw new NullReferenceException("endpoint is null!");
 
-            var isSuccess = PasswordHasherHelper.VerifyPassword(password, result.Password);
+            var callBackUrl = _configuration["AzureOAuth:CallBackUrl"];
 
-            return isSuccess;
+            if (string.IsNullOrEmpty(callBackUrl))
+                throw new NullReferenceException("callBackUrl is null!");
+
+            var clientId = _configuration["AzureOAuth:ClientId"];
+
+            var fullUrl = $"{endPoint}/authorize?scope=openid https://graph.microsoft.com/user.read&redirect_uri={callBackUrl}&response_type=code&client_id={clientId}&state=hos&prompt=consent";
+
+            return fullUrl;
         }
 
-        public async Task<bool> SignUp(string account, string password)
+        public async Task<TokenResponse?> ExchangeCodeForTokenAsync(string code)
         {
-            try
+            var endPoint = _configuration["AzureOAuth:TokenEndPolint"];
+
+            if (string.IsNullOrEmpty(endPoint))
+                throw new NullReferenceException("endpoint is null!");
+
+            var redirect_uri = _configuration["AzureOAuth:CallBackUrl"];
+
+            if (string.IsNullOrEmpty(redirect_uri))
+                throw new NullReferenceException("redirect_uri is null!");
+
+            var clientId = _configuration["AzureOAuth:ClientId"];
+
+            if (string.IsNullOrEmpty(clientId))
+                throw new NullReferenceException("clientId is null!");
+
+            var clientSecret = _configuration["AzureOAuth:Secret"];
+
+            if (string.IsNullOrEmpty(clientSecret))
+                throw new NullReferenceException("clientSecret is null!");
+
+            var content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                var result = await _context.Users.Where(u => u.Name == account).FirstOrDefaultAsync();
+                ["grant_type"] = "authorization_code",
+                ["code"] = code,
+                ["redirect_uri"] = redirect_uri,
+                ["client_id"] = clientId,
+                ["client_secret"] = clientSecret
+            });
 
-                if (result != null)
-                {
-                    return false;
-                }
+            var response = await _httpClient.PostAsync(endPoint, content);
+            var json = await response.Content.ReadAsStringAsync();
 
-                User user = new User
-                {
-                    Name = account,
-                    Password = password
-                };
-
-                await _context.Set<User>().AddAsync(user);
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch(Exception ex)
+            if (!response.IsSuccessStatusCode)
             {
-                return false;
+                Console.WriteLine($"Failed to get token: {json}");
+                return null;
             }
+
+            return JsonSerializer.Deserialize<TokenResponse>(json);
+        }
+
+        public async Task<MicrosoftUserInfo?> GetUserInfoAsync(string accessToken)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me");
+
+            request.Headers.Authorization =
+                new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.SendAsync(request);
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Failed to get user info: {json}");
+                return null;
+            }
+
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+            return JsonSerializer.Deserialize<MicrosoftUserInfo>(json, opts);
         }
     }
 }
