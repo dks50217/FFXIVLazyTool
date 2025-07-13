@@ -48,8 +48,15 @@ FFXIVLazyTool 是一個基於 .NET 8.0 和 Blazor 的懶人用網頁應用程式
         "ClientId": "", // Azure app Client Id
         "Secret": "", // Azure app Secret
         "EndPoint": "https://login.microsoftonline.com/common/oauth2/v2.0",
-        "TokenEndPolint": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+        "TokenEndPoint": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
         "CallBackUrl": "" // Call Back Url
+    },
+    "GoogleOAuth": {
+        "ClientId": "", // Google app Client Id
+        "Secret": "", // Google app Secret
+        "EndPoint": "https://accounts.google.com/o/oauth2/v2/auth",
+        "TokenEndPoint": "https://oauth2.googleapis.com/token",
+        "CallBackUrl": "https://localhost:7166/sso/google/callback"
     },
     "Home": {
         "FreeCompany": "", // Free Company name

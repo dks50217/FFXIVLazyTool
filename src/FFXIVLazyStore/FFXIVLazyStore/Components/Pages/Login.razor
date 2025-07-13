@@ -1,11 +1,13 @@
 ﻿@page "/Login"
+@using Core.Service
 @using global::Service.Service
 @layout LoginLayout
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject DialogService DialogService
-@inject IAuthService authService
+@inject IAuthAzureService authAzureService
+@inject IAuthGoogleService authGoogleService
 @inject IJSRuntime jsRuntime
 
 
@@ -32,9 +34,13 @@
 
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
             <RadzenButton ButtonStyle="ButtonStyle.Primary" Click="StartGoBack">Go back</RadzenButton>
-            <RadzenButton Image="images/microsoft.svg" ButtonStyle="ButtonStyle.Base" Click="StartSSOLogin">
+            <RadzenButton ButtonStyle="ButtonStyle.Base" Click="StartAzureSSOLogin">
                 <span class="rz-button-text">Microsoft account</span>
                 <RadzenImage Path="images/microsoft.svg" Style="width: 20px; height: 20px; margin-inline-start: 8px;" />
+            </RadzenButton>
+            <RadzenButton ButtonStyle="ButtonStyle.Base" Click="StartGoogleSSOLogin">
+                <span class="rz-button-text">Google account</span>
+                <RadzenImage Path="images/google.svg" Style="width: 20px; height: 20px; margin-inline-start: 8px;" />
             </RadzenButton>
         </RadzenStack>
 
@@ -161,9 +167,15 @@
     }
 
 
-    private async Task StartSSOLogin()
+    private async Task StartAzureSSOLogin()
     {
-        var url = authService.GetSSOLoginUrl();
+        var url = authAzureService.GetSSOLoginUrl();
+        await jsRuntime.InvokeVoidAsync("eval", $"window.location.href = '{url}'");
+    }
+
+    private async Task StartGoogleSSOLogin()
+    {
+        var url = authGoogleService.GetSSOLoginUrl();
         await jsRuntime.InvokeVoidAsync("eval", $"window.location.href = '{url}'");
     }
 

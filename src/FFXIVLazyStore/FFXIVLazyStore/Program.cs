@@ -35,7 +35,8 @@ builder.Services.AddLocalization();
 
 builder.Services.AddControllers();
 
-builder.Services.AddHttpClient<IAuthService, AuthService>();
+builder.Services.AddHttpClient<IAuthAzureService, AuthAzureService>();
+builder.Services.AddHttpClient<IAuthGoogleService, AuthGoogleService>();
 builder.Services.AddScoped<INetStoneService, NetStoneService>();
 builder.Services.AddScoped<IAzureInferenceChatService, AzureInferenceChatService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();

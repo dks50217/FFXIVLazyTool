@@ -18,21 +18,21 @@ using System.Threading.Tasks;
 
 namespace Service.Service
 {
-    public interface IAuthService
+    public interface IAuthAzureService
     {
         string GetSSOLoginUrl();
         Task<TokenResponse?> ExchangeCodeForTokenAsync(string code);
         Task<MicrosoftUserInfo?> GetUserInfoAsync(string accessToken);
     }
 
-    public class AuthService : IAuthService
+    public class AuthAzureService : IAuthAzureService
     {
 
         private readonly IConfiguration _configuration;
 
         private readonly HttpClient _httpClient;
 
-        public AuthService(IConfiguration configuration, HttpClient httpClient)
+        public AuthAzureService(IConfiguration configuration, HttpClient httpClient)
         {
             _configuration = configuration;
             _httpClient = httpClient;
@@ -59,7 +59,7 @@ namespace Service.Service
 
         public async Task<TokenResponse?> ExchangeCodeForTokenAsync(string code)
         {
-            var endPoint = _configuration["AzureOAuth:TokenEndPolint"];
+            var endPoint = _configuration["AzureOAuth:TokenEndPoint"];
 
             if (string.IsNullOrEmpty(endPoint))
                 throw new NullReferenceException("endpoint is null!");
